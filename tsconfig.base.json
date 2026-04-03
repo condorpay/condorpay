@@ -1,18 +1,18 @@
 {
-  "compilerOptions": {
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "moduleResolution": "bundler",
-    "target": "ES2022",
-    "module": "ESNext",
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "paths": {
-      "@condorpay/core": ["packages/core/src/index.ts"],
-      "@condorpay/co": ["packages/co/src/index.ts"],
-      "@condorpay/sdk": ["packages/sdk/src/index.ts"]
-    }
-  }
+	"compilerOptions": {
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"moduleResolution": "bundler",
+		"target": "ES2022",
+		"module": "ESNext",
+		"declaration": true,
+		"declarationMap": true,
+		"sourceMap": true,
+		"paths": {
+			"@condorpay/core": ["packages/core/src/index.ts"],
+			"@condorpay/co": ["packages/co/src/index.ts"],
+			"@condorpay/sdk": ["packages/sdk/src/index.ts"]
+		}
+	}
 }
