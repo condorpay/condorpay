@@ -26,7 +26,7 @@ packages/
   uy/      → @condorpay/uy     — Uruguay: SISTARBANC + RedPagos (phase 3)
   us/      → @condorpay/us     — USA: FedNow + Stripe (phase 4)
   ca/      → @condorpay/ca     — Canada: RTR + Interac (phase 4)
-  sdk/     → condorpay         — unified root package
+  sdk/     → @condorpay/sdk   — unified root package
   medusa/  → @condorpay/medusa — Medusa.js plugin
 apps/
   docs/    → documentation site

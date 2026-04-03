@@ -65,7 +65,7 @@ describe("CondorPay", () => {
 		});
 	});
 
-	describe("condorpay/co re-exports", () => {
+	describe("@condorpay/sdk/co re-exports", () => {
 		it("CondorPayCo is accessible from @condorpay/co", () => {
 			expect(CondorPayCo).toBeDefined();
 		});
