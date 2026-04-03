@@ -18,7 +18,9 @@
     "@biomejs/biome": "^2.4.10",
     "@changesets/cli": "^2.30.0",
     "@fission-ai/openspec": "^1.2.0",
+    "@types/node": "^25.5.0",
     "nx": "latest",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
   }
 }
