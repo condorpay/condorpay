@@ -12,6 +12,7 @@
 		"paths": {
 			"@condorpay/core": ["packages/core/src/index.ts"],
 			"@condorpay/co": ["packages/co/src/index.ts"],
+			"@condorpay/medusa": ["packages/medusa/src/index.ts"],
 			"condorpay": ["packages/sdk/src/index.ts"],
 			"condorpay/co": ["packages/sdk/src/co-entry.ts"]
 		}
