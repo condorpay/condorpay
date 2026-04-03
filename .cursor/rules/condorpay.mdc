@@ -1,3 +1,8 @@
+---
+description: CondorPay SDK rules — apply to all files in this monorepo
+globs: ["packages/**/*.ts", "apps/**/*.ts"]
+alwaysApply: true
+---
 # CondorPay — AI Agent Context
 
 ## Vision
