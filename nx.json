@@ -3,5 +3,13 @@
 		"version": "22.6.3"
 	},
 	"$schema": "./node_modules/nx/schemas/nx-schema.json",
-	"analytics": false
+	"analytics": false,
+	"targetDefaults": {
+		"build": {
+			"dependsOn": ["^build"]
+		},
+		"test": {
+			"dependsOn": ["^build"]
+		}
+	}
 }
