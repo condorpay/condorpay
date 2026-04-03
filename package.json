@@ -1,26 +1,34 @@
 {
-	"name": "condorpay",
-	"version": "0.0.0",
-	"private": true,
-	"packageManager": "pnpm@9.0.0",
-	"scripts": {
-		"build": "nx run-many --target=build",
-		"test": "nx run-many --target=test",
-		"lint": "nx run-many --target=lint",
-		"spec:new": "openspec new change",
-		"spec:change": "openspec change",
-		"spec:archive": "openspec archive",
-		"spec:list": "openspec list",
-		"spec:status": "openspec status",
-		"spec:view": "openspec view"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "^2.4.10",
-		"@changesets/cli": "^2.30.0",
-		"@fission-ai/openspec": "^1.2.0",
-		"@types/node": "^25.5.0",
-		"nx": "latest",
-		"typescript": "^6.0.2",
-		"vitest": "^4.1.2"
-	}
+  "name": "condorpay",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "build": "nx run-many --target=build",
+    "test": "nx run-many --target=test",
+    "lint": "nx run-many --target=lint",
+    "spec:new": "openspec new change",
+    "spec:change": "openspec change",
+    "spec:archive": "openspec archive",
+    "spec:list": "openspec list",
+    "spec:status": "openspec status",
+    "spec:view": "openspec view",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.10",
+    "@changesets/cli": "^2.30.0",
+    "@fission-ai/openspec": "^1.2.0",
+    "@types/node": "^25.5.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "nx": "latest",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
+  },
+  "lint-staged": {
+    "**/*.{ts,tsx}": [
+      "biome check --write --unsafe"
+    ]
+  }
 }
