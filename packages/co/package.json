@@ -1,7 +1,7 @@
 {
-	"name": "@condorpay/core",
+	"name": "@condorpay/co",
 	"version": "0.1.0",
-	"description": "Shared foundation for the condorpay LATAM instant payments SDK",
+	"description": "condorpay Colombia integration — Bre-B QR and Wompi payment gateway",
 	"license": "MIT",
 	"type": "module",
 	"main": "./dist/cjs/index.js",
@@ -17,6 +17,26 @@
 				"types": "./dist/cjs/index.d.ts",
 				"default": "./dist/cjs/index.js"
 			}
+		},
+		"./breb": {
+			"import": {
+				"types": "./dist/esm/breb-entry.d.ts",
+				"default": "./dist/esm/breb-entry.js"
+			},
+			"require": {
+				"types": "./dist/cjs/breb-entry.d.ts",
+				"default": "./dist/cjs/breb-entry.js"
+			}
+		},
+		"./wompi": {
+			"import": {
+				"types": "./dist/esm/wompi-entry.d.ts",
+				"default": "./dist/esm/wompi-entry.js"
+			},
+			"require": {
+				"types": "./dist/cjs/wompi-entry.d.ts",
+				"default": "./dist/cjs/wompi-entry.js"
+			}
 		}
 	},
 	"files": [
@@ -25,6 +45,12 @@
 	],
 	"engines": {
 		"node": ">=20"
+	},
+	"peerDependencies": {
+		"@condorpay/core": "*"
+	},
+	"devDependencies": {
+		"@condorpay/core": "workspace:*"
 	},
 	"scripts": {
 		"build": "tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && node -e \"require('fs').writeFileSync('dist/cjs/package.json', JSON.stringify({type:'commonjs'},null,2))\"",
