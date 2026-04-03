@@ -1,31 +1,19 @@
 {
-	"cSpell.words": [
-		"Bancolombia",
-		"BBVA",
-		"BCRA",
-		"brcode",
-		"Breb",
-		"CCITT",
-		"condorpay",
-		"Conekta",
-		"HMAC",
-		"Interac",
-		"keepalive",
-		"México",
-		"openspec",
-		"Pago",
-		"Pagos",
-		"Perú",
-		"Plin",
-		"qrcode",
-		"República",
-		"Scotiabank",
-		"Seguro",
-		"SISTARBANC",
-		"Transbank",
-		"Transferencias",
-		"Webpay",
-		"Wompi",
-		"Yape"
-	]
+	"editor.defaultFormatter": "biomejs.biome",
+	"editor.formatOnSave": true,
+	"editor.codeActionsOnSave": {
+		"source.fixAll.biome": "explicit"
+	},
+	"[typescript]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[typescriptreact]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[javascript]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[json]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	}
 }
