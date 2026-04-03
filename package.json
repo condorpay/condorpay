@@ -7,16 +7,18 @@
     "build": "nx run-many --target=build",
     "test": "nx run-many --target=test",
     "lint": "nx run-many --target=lint",
-    "spec:propose": "openspec propose",
-    "spec:apply": "openspec apply",
-    "spec:archive": "openspec archive"
+    "spec:new": "openspec new",
+    "spec:change": "openspec change",
+    "spec:archive": "openspec archive",
+    "spec:list": "openspec list",
+    "spec:status": "openspec status",
+    "spec:view": "openspec view"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.10",
     "@changesets/cli": "^2.30.0",
     "@fission-ai/openspec": "^1.2.0",
-    "@nx/node": "22.6.3",
-    "nx": "^22.6.4",
+    "nx": "latest",
     "typescript": "^6.0.2"
   }
 }
