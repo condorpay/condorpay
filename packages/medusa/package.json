@@ -39,7 +39,10 @@
 			}
 		}
 	},
-	"files": ["dist", "README.md"],
+	"files": [
+		"dist",
+		"README.md"
+	],
 	"engines": {
 		"node": ">=20"
 	},
