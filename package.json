@@ -16,6 +16,7 @@
     "@changesets/cli": "^2.30.0",
     "@fission-ai/openspec": "^1.2.0",
     "@nx/node": "22.6.3",
+    "nx": "^22.6.4",
     "typescript": "^6.0.2"
   }
 }
