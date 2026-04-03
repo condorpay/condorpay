@@ -7,7 +7,7 @@
     "build": "nx run-many --target=build",
     "test": "nx run-many --target=test",
     "lint": "nx run-many --target=lint",
-    "spec:new": "openspec new",
+    "spec:new": "openspec new change",
     "spec:change": "openspec change",
     "spec:archive": "openspec archive",
     "spec:list": "openspec list",
