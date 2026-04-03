@@ -38,6 +38,15 @@ importers:
 
   packages/core: {}
 
+  packages/sdk:
+    dependencies:
+      '@condorpay/co':
+        specifier: workspace:*
+        version: link:../co
+      '@condorpay/core':
+        specifier: workspace:*
+        version: link:../core
+
 packages:
 
   '@babel/runtime@7.29.2':

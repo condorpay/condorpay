@@ -1,0 +1,49 @@
+{
+	"name": "condorpay",
+	"version": "0.1.0",
+	"description": "CondorPay SDK — unified LATAM payments, single install",
+	"license": "MIT",
+	"type": "module",
+	"main": "./dist/cjs/index.js",
+	"module": "./dist/esm/index.js",
+	"types": "./dist/esm/index.d.ts",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./dist/esm/index.d.ts",
+				"default": "./dist/esm/index.js"
+			},
+			"require": {
+				"types": "./dist/cjs/index.d.ts",
+				"default": "./dist/cjs/index.js"
+			}
+		},
+		"./co": {
+			"import": {
+				"types": "./dist/esm/co-entry.d.ts",
+				"default": "./dist/esm/co-entry.js"
+			},
+			"require": {
+				"types": "./dist/cjs/co-entry.d.ts",
+				"default": "./dist/cjs/co-entry.js"
+			}
+		}
+	},
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"engines": {
+		"node": ">=20"
+	},
+	"dependencies": {
+		"@condorpay/core": "workspace:*",
+		"@condorpay/co": "workspace:*"
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && node -e \"require('fs').writeFileSync('dist/cjs/package.json', JSON.stringify({type:'commonjs'},null,2))\"",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"lint": "biome check src"
+	}
+}

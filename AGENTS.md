@@ -1,0 +1,217 @@
+# CondorPay — AI Agent Context
+
+## Vision
+
+The standard SDK for instant payments in LATAM and beyond.
+Every line of code must reflect that ambition — clean, fast,
+reliable, and developer-friendly.
+
+## Project
+
+Unified instant payments SDK — Nx monorepo + pnpm workspaces.
+Open source. MIT license. Zero external runtime dependencies.
+Built to handle millions of transactions across multiple countries.
+
+## Architecture
+
+```
+packages/
+  core/    → @condorpay/core   — shared types, HTTP, AbstractPaymentProvider
+  co/      → @condorpay/co     — Colombia: Bre-B (EMVCo QR) + Wompi
+  mx/      → @condorpay/mx     — México: CoDi + DiMo + Conekta (phase 2)
+  br/      → @condorpay/br     — Brasil: Pix (phase 2)
+  cl/      → @condorpay/cl     — Chile: TEF + Webpay (phase 2)
+  pe/      → @condorpay/pe     — Perú: Yape + Plin (phase 2)
+  ar/      → @condorpay/ar     — Argentina: Transferencias 3.0 (phase 3)
+  uy/      → @condorpay/uy     — Uruguay: SISTARBANC + RedPagos (phase 3)
+  us/      → @condorpay/us     — USA: FedNow + Stripe (phase 4)
+  ca/      → @condorpay/ca     — Canada: RTR + Interac (phase 4)
+  sdk/     → condorpay         — unified root package
+  medusa/  → @condorpay/medusa — Medusa.js plugin
+apps/
+  docs/    → documentation site
+```
+
+## Roadmap
+
+```
+Phase 1 (2026 H1):  co  → Colombia  — Bre-B + Wompi
+Phase 2 (2026 H2):  mx  → México    — CoDi + DiMo + Conekta
+                    br  → Brasil    — Pix + PagSeguro
+                    cl  → Chile     — TEF + Webpay
+                    pe  → Perú      — Yape + Plin
+Phase 3 (2027 H1):  ar  → Argentina — Transferencias 3.0
+                    uy  → Uruguay   — SISTARBANC + RedPagos
+Phase 4 (2027 H2):  us  → USA       — FedNow + Stripe
+                    ca  → Canada    — RTR + Interac
+```
+
+## Non-negotiable
+
+These rules are absolute. No exceptions.
+
+### TypeScript
+
+- TypeScript 6, strict mode enabled — always
+- `exactOptionalPropertyTypes: true`
+- `noUncheckedIndexedAccess: true`
+- `verbatimModuleSyntax: true`
+- Zero `any` — use `unknown` and narrow properly
+- Zero non-null assertions (`!`) — use optional chaining or explicit guards
+- Zero `as` type casts unless absolutely unavoidable with a comment explaining why
+- All public API functions must have explicit return types
+- All errors must be typed — never `throw new Error("string")`,
+  use `CondorPayError` subclasses with `ErrorCode` enum
+
+### Zero dependencies
+
+- Zero external runtime dependencies — ever
+- Native fetch for HTTP (Node 20+ / modern browsers)
+- Web Crypto API for HMAC/signatures (no crypto-js, no node:crypto)
+- SVG QR generated natively — no qrcode libraries
+- CRC16-CCITT implemented from scratch with lookup table
+
+### Performance
+
+- Every hot path must be benchmarked if it runs per-transaction
+- CRC16 must use lookup table (not bitwise loop) — 256x faster
+- QR matrix generation must be O(n²) worst case
+- HTTP client must support connection pooling via fetch keepalive
+- All exports must be tree-shakeable — no side effects at module level
+- Bundle size matters — check with `pnpm nx run sdk:size-limit` before PR
+
+### Code quality
+
+- Tabs for indentation — never spaces
+- Imports sorted: type imports before value imports, alphabetically within groups
+- No barrel files that re-export everything blindly — explicit named exports only
+- Every public function must have a JSDoc comment with @param, @returns, @throws
+- Every non-obvious algorithm must have an inline comment explaining the math/logic
+- Magic numbers must be named constants with explanatory comments
+
+### Testing
+
+- Every new function needs at least one unit test
+- CRC16 and EMVCo payload must be tested against official spec test vectors
+- Webhook validation must be tested with both valid and tampered signatures
+- Tests must be deterministic — no Date.now(), Math.random() without mocking
+- Test descriptions in English, full sentences:
+  "should throw ValidationError when amount is negative"
+- Coverage threshold: 80% minimum — enforced in CI
+
+### Security
+
+- Never log sensitive data: API keys, private keys, card numbers, CPF/CC
+- Webhook signatures must be validated with constant-time comparison (timing attack safe)
+- All amounts validated before processing — reject negative, NaN, Infinity
+- HTTP client must enforce HTTPS only in production mode
+- No eval(), no Function(), no dynamic imports with user input
+
+## Code style enforcement
+
+After generating ANY TypeScript code, immediately run:
+
+```bash
+pnpm exec biome check --write --unsafe <path>
+```
+
+A task is NOT complete until all of these pass with zero errors:
+
+```bash
+pnpm nx lint <package>
+pnpm nx build <package>
+pnpm nx test <package>
+```
+
+## Commit convention (Conventional Commits)
+
+```
+feat(scope):      new feature
+fix(scope):       bug fix
+perf(scope):      performance improvement
+refactor(scope):  code change with no behavior change
+test(scope):      adding or fixing tests
+docs(scope):      documentation only
+chore(scope):     tooling, deps, config
+ci(scope):        CI/CD changes
+```
+
+- Scope = package name: core, co, mx, br, cl, pe, ar, uy, us, ca, sdk, medusa, docs
+- Body: explain WHY, not what (the diff shows what)
+- Breaking changes: add `!` after scope: `feat(co)!: rename generateQR to createQR`
+
+## Branch convention
+
+```
+feat/description        → new feature
+fix/description         → bug fix
+perf/description        → performance improvement
+chore/description       → tooling or config
+docs/description        → documentation
+release/vX.Y.Z          → release branch
+```
+
+- Always branch from main
+- One concern per branch — never mix features with fixes
+
+## PR rules
+
+- Title follows commit convention
+- Description: What + Why + Test coverage
+- Must include changeset if it affects published packages
+- CI must be green before merge — no exceptions
+- No self-merge without review (when team grows)
+
+## Developer experience principles
+
+This SDK will be used by thousands of developers.
+Every decision must optimize for their experience:
+
+1. Zero-config for the common case
+2. Errors that tell you exactly what went wrong and how to fix it
+3. TypeScript types so good you never need to read the docs
+4. Consistent API across all country providers
+5. Works in Node.js 20+, Deno, Bun, and modern browsers
+
+## Country provider pattern
+
+Every country package must follow this exact pattern:
+
+```typescript
+// Main provider extends AbstractPaymentProvider from @condorpay/core
+export class CondorPayXX extends AbstractPaymentProvider {
+  readonly name = "condorpay-xx";
+
+  // Country-specific modules as public properties
+  readonly payments: XXPaymentClient;
+  readonly webhooks: XXWebhookValidator;
+
+  async createPayment(request: PaymentRequest): Promise<PaymentResponse>;
+  async getPayment(id: string): Promise<PaymentResponse>;
+  async cancelPayment(id: string): Promise<PaymentResponse>;
+}
+```
+
+## Payment systems by country
+
+```
+co  → Bre-B (Banco de la República) + Wompi (Bancolombia)
+mx  → CoDi / DiMo (Banco de México) + Conekta
+br  → Pix (Banco Central do Brasil) + PagSeguro
+cl  → TEF (Banco Central Chile) + Webpay (Transbank)
+pe  → Yape (BCP) + Plin (BBVA/Interbank/Scotiabank)
+ar  → Transferencias 3.0 (BCRA) + Mercado Pago
+uy  → SISTARBANC (BCU) + RedPagos
+us  → FedNow (Federal Reserve) + Stripe
+ca  → RTR Real-Time Rail (Payments Canada) + Interac
+```
+
+## What we never do
+
+- Never break the public API without a major version bump
+- Never add external dependencies without team discussion
+- Never skip tests because "it's a simple change"
+- Never merge a PR with failing CI
+- Never use console.log in library code — use the debug utility
+- Never hardcode URLs, keys, or environment-specific values
+- Never ship a feature without documentation
