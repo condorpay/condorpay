@@ -1,6 +1,6 @@
 {
 	"name": "@condorpay/core",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Shared foundation for the condorpay LATAM instant payments SDK",
 	"license": "MIT",
 	"publishConfig": {

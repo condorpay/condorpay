@@ -1,5 +1,13 @@
 # @condorpay/sdk
 
+## 0.1.4
+
+### Patch Changes
+
+- Updated dependencies [e5493cd]
+  - @condorpay/core@0.1.1
+  - @condorpay/co@0.1.3
+
 ## 0.1.3
 
 ### Patch Changes
