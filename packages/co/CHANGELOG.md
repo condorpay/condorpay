@@ -1,5 +1,11 @@
 # @condorpay/co
 
+## 0.1.2
+
+### Patch Changes
+
+- 02e9f47: Republish packages with built `dist` artifacts included in the npm tarballs.
+
 ## 0.1.1
 
 ### Patch Changes
