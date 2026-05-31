@@ -1,5 +1,13 @@
 # @condorpay/sdk
 
+## 0.1.3
+
+### Patch Changes
+
+- 037592d: Republish packages with built `dist` artifacts included in the npm tarballs.
+- Updated dependencies [037592d]
+  - @condorpay/co@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes
