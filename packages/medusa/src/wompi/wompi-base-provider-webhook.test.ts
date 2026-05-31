@@ -9,16 +9,16 @@ const EVENT_KEY = "test-event-key-wompi";
 const TRANSACTION = {
 	id: "tx-002",
 	status: WompiTransactionStatus.APPROVED,
-	amountInCents: 1_000_000,
+	amount_in_cents: 1_000_000,
 	currency: "COP" as const,
-	paymentMethodType: "NEQUI",
+	payment_method_type: "NEQUI",
 	reference: "payses_wompi_002",
-	createdAt: "2026-04-02T00:00:00Z",
+	created_at: "2026-04-02T00:00:00Z",
 };
 
 const TIMESTAMP = 1743552000;
 
-async function computeSignature(
+async function computeWompiChecksum(
 	eventKey: string,
 	tx: typeof TRANSACTION,
 	timestamp: number,
@@ -26,26 +26,41 @@ async function computeSignature(
 	const checksumString =
 		tx.id +
 		tx.status +
-		String(tx.amountInCents) +
-		tx.currency +
-		tx.paymentMethodType +
-		String(timestamp);
+		String(tx.amount_in_cents) +
+		String(timestamp) +
+		eventKey;
 	const encoder = new TextEncoder();
-	const key = await globalThis.crypto.subtle.importKey(
-		"raw",
-		encoder.encode(eventKey),
-		{ name: "HMAC", hash: "SHA-256" },
-		false,
-		["sign"],
-	);
-	const sig = await globalThis.crypto.subtle.sign(
-		"HMAC",
-		key,
+	const digest = await globalThis.crypto.subtle.digest(
+		"SHA-256",
 		encoder.encode(checksumString),
 	);
-	return Array.from(new Uint8Array(sig))
+	return Array.from(new Uint8Array(digest))
 		.map((b) => b.toString(16).padStart(2, "0"))
 		.join("");
+}
+
+async function createWompiBody(tx: typeof TRANSACTION): Promise<{
+	event: string;
+	data: { transaction: typeof TRANSACTION };
+	environment: string;
+	signature: { checksum: string; properties: string[] };
+	timestamp: number;
+}> {
+	const checksum = await computeWompiChecksum(EVENT_KEY, tx, TIMESTAMP);
+	return {
+		event: "transaction.updated",
+		data: { transaction: tx },
+		environment: "prod",
+		signature: {
+			checksum,
+			properties: [
+				"transaction.id",
+				"transaction.status",
+				"transaction.amount_in_cents",
+			],
+		},
+		timestamp: TIMESTAMP,
+	};
 }
 
 function provider(): CondorPayWompiCardProvider {
@@ -64,18 +79,11 @@ function provider(): CondorPayWompiCardProvider {
 describe("CondorPayWompiBaseProvider webhooks", () => {
 	it("returns authorized with session_id and amount for approved event", async () => {
 		const p = provider();
-		const signature = await computeSignature(EVENT_KEY, TRANSACTION, TIMESTAMP);
-		const body = {
-			event: "transaction.updated",
-			data: { transaction: TRANSACTION },
-			environment: "production",
-			signature: { checksum: "", properties: [] },
-			timestamp: TIMESTAMP,
-		};
+		const body = await createWompiBody(TRANSACTION);
 		const result = await p.getWebhookActionAndData({
 			data: body as unknown as Record<string, unknown>,
 			rawData: JSON.stringify(body),
-			headers: { "x-signature": signature },
+			headers: { "x-event-checksum": body.signature.checksum },
 		});
 		expect(result.action).toBe("authorized");
 		expect(result.data?.session_id).toBe("payses_wompi_002");
@@ -88,35 +96,22 @@ describe("CondorPayWompiBaseProvider webhooks", () => {
 			...TRANSACTION,
 			status: WompiTransactionStatus.DECLINED,
 		};
-		const signature = await computeSignature(EVENT_KEY, declined, TIMESTAMP);
-		const body = {
-			event: "transaction.updated",
-			data: { transaction: declined },
-			environment: "production",
-			signature: { checksum: "", properties: [] },
-			timestamp: TIMESTAMP,
-		};
+		const body = await createWompiBody(declined);
 		const result = await p.getWebhookActionAndData({
 			data: body as unknown as Record<string, unknown>,
 			rawData: JSON.stringify(body),
-			headers: { "x-signature": signature },
+			headers: { "x-event-checksum": body.signature.checksum },
 		});
 		expect(result.action).toBe("failed");
 	});
 
 	it("returns not_supported for bad signature", async () => {
 		const p = provider();
-		const body = {
-			event: "transaction.updated",
-			data: { transaction: TRANSACTION },
-			environment: "production",
-			signature: { checksum: "", properties: [] },
-			timestamp: TIMESTAMP,
-		};
+		const body = await createWompiBody(TRANSACTION);
 		const result = await p.getWebhookActionAndData({
 			data: body as unknown as Record<string, unknown>,
 			rawData: JSON.stringify(body),
-			headers: { "x-signature": "bad" },
+			headers: { "x-event-checksum": "bad" },
 		});
 		expect(result.action).toBe("not_supported");
 	});

@@ -16,7 +16,7 @@ import { BigNumber } from "@medusajs/utils";
 export function mapWompiEventToMedusaAction(
 	event: WompiWebhookEvent,
 ): PaymentActions {
-	const status = event.data.transaction.status;
+	const status = readTransactionStatus(event);
 	switch (status) {
 		case "APPROVED":
 			return "authorized";
@@ -33,6 +33,38 @@ export function mapWompiEventToMedusaAction(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return value !== null && typeof value === "object";
+}
+
+function transactionFromEvent(
+	event: WompiWebhookEvent,
+): Record<string, unknown> | null {
+	const data = event.data;
+	if (!isRecord(data) || !isRecord(data.transaction)) {
+		return null;
+	}
+	return data.transaction;
+}
+
+function readTransactionStatus(event: WompiWebhookEvent): string {
+	const tx = transactionFromEvent(event);
+	const status = tx?.status;
+	return typeof status === "string" ? status : "";
+}
+
+function readTransactionReference(event: WompiWebhookEvent): string {
+	const tx = transactionFromEvent(event);
+	const reference = tx?.reference;
+	return typeof reference === "string" ? reference : "";
+}
+
+function readTransactionAmountInCents(event: WompiWebhookEvent): number {
+	const tx = transactionFromEvent(event);
+	const snakeAmount = tx?.amount_in_cents;
+	if (typeof snakeAmount === "number") {
+		return snakeAmount;
+	}
+	const camelAmount = tx?.amountInCents;
+	return typeof camelAmount === "number" ? camelAmount : 0;
 }
 
 function isWompiWebhookEvent(
@@ -54,9 +86,11 @@ function isWompiWebhookEvent(
 	return (
 		typeof tx.id === "string" &&
 		typeof tx.status === "string" &&
-		typeof tx.amountInCents === "number" &&
+		(typeof tx.amount_in_cents === "number" ||
+			typeof tx.amountInCents === "number") &&
 		typeof tx.currency === "string" &&
-		typeof tx.paymentMethodType === "string" &&
+		(typeof tx.payment_method_type === "string" ||
+			typeof tx.paymentMethodType === "string") &&
 		typeof tx.reference === "string" &&
 		typeof candidate.timestamp === "number"
 	);
@@ -98,7 +132,7 @@ export function parseWompiWebhookFromMedusaPayload(
 }
 
 /**
- * Reads the Wompi HMAC hex digest from common webhook header names.
+ * Reads the Wompi event checksum from common webhook header names.
  *
  * @param headers - HTTP headers from the webhook request
  * @returns Signature string or empty when missing
@@ -107,7 +141,7 @@ export function extractWompiSignatureFromHeaders(
 	headers: Record<string, unknown>,
 ): string {
 	for (const [key, value] of Object.entries(headers)) {
-		if (key.toLowerCase() === "x-signature" && typeof value === "string") {
+		if (key.toLowerCase() === "x-event-checksum" && typeof value === "string") {
 			return value;
 		}
 	}
@@ -115,10 +149,10 @@ export function extractWompiSignatureFromHeaders(
 }
 
 /**
- * Validates the Wompi HMAC and returns a Medusa {@link WebhookActionResult}.
+ * Validates the Wompi checksum and returns a Medusa {@link WebhookActionResult}.
  *
  * @param event - Parsed Wompi event
- * @param signature - HMAC hex digest from the `X-Signature` header
+ * @param signature - Checksum from the `X-Event-Checksum` header
  * @param eventsIntegrityKey - Wompi Events integrity secret
  */
 export async function wompiWebhookToMedusaResult(
@@ -142,8 +176,8 @@ export async function wompiWebhookToMedusaResult(
 	}
 
 	const action = mapWompiEventToMedusaAction(event);
-	const reference = event.data.transaction.reference;
-	const amountMajor = new BigNumber(event.data.transaction.amountInCents / 100);
+	const reference = readTransactionReference(event);
+	const amountMajor = new BigNumber(readTransactionAmountInCents(event) / 100);
 
 	if (action === "authorized") {
 		return {
