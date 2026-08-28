@@ -1,5 +1,13 @@
 # @condorpay/medusa
 
+## 1.0.0
+
+### Patch Changes
+
+- Updated dependencies [c95fb8b]
+  - @condorpay/co@0.2.0
+  - @condorpay/core@0.1.2
+
 ## 0.1.3
 
 ### Patch Changes
