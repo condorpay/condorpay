@@ -13,6 +13,12 @@ export interface WompiConfig {
 	 * set it explicitly when pointing baseUrl at the sandbox.
 	 */
 	checkoutUrl?: string;
+	/**
+	 * "Secreto de integridad" (prod_integrity_*) from the Wompi dashboard, used
+	 * to sign Web Checkout URLs. This is NOT the events secret (prod_events_*)
+	 * that validates incoming webhooks - Wompi issues two distinct values.
+	 */
+	integritySecret?: string;
 }
 
 export enum WompiPaymentLinkStatus {
@@ -141,4 +147,19 @@ export interface WompiWebhookEvent {
 		properties: string[];
 	};
 	timestamp: number;
+}
+
+/**
+ * A transaction exactly as `/transactions` returns it, in Wompi's snake_case.
+ * Kept separate from {@link WompiTransaction} so no camelCase read can silently
+ * resolve to undefined.
+ */
+export interface WompiTransactionResponse {
+	id: string;
+	status: string;
+	amount_in_cents: number;
+	currency: string;
+	payment_method_type?: string | null;
+	reference: string;
+	created_at: string;
 }

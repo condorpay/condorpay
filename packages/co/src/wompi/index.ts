@@ -1,3 +1,5 @@
+export type { CreateCheckoutUrlRequest } from "./checkout.js";
+export { buildWompiCheckoutUrl } from "./checkout.js";
 export type {
 	BankAccountInfo,
 	CreatePaymentLinkRequest,
@@ -6,6 +8,7 @@ export type {
 	WompiPaymentLink,
 	WompiPayout,
 	WompiTransaction,
+	WompiTransactionResponse,
 	WompiWebhookEvent,
 } from "./types.js";
 export {
