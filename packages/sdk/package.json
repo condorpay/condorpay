@@ -1,6 +1,6 @@
 {
 	"name": "@condorpay/sdk",
-	"version": "0.1.4",
+	"version": "0.1.5",
 	"description": "CondorPay SDK — unified LATAM payments, single install",
 	"license": "MIT",
 	"publishConfig": {

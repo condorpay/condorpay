@@ -1,6 +1,6 @@
 {
 	"name": "@condorpay/medusa",
-	"version": "0.1.3",
+	"version": "1.0.0",
 	"description": "CondorPay Medusa v2 payment providers — Bre-B QR and Wompi (Colombia)",
 	"license": "MIT",
 	"publishConfig": {
