@@ -7,6 +7,12 @@ export interface WompiConfig {
 	publicKey: string;
 	privateKey: string;
 	baseUrl?: string;
+	/**
+	 * Host that serves the hosted checkout pages. Wompi does not return a link
+	 * URL, so it is built as `${checkoutUrl}/l/${id}`. Defaults to production;
+	 * set it explicitly when pointing baseUrl at the sandbox.
+	 */
+	checkoutUrl?: string;
 }
 
 export enum WompiPaymentLinkStatus {
@@ -23,6 +29,29 @@ export interface CreatePaymentLinkRequest {
 	singleUse?: boolean;
 	collectShipping?: boolean;
 	redirectUrl?: string;
+}
+
+/**
+ * What Wompi actually returns from /payment_links, in its own snake_case shape.
+ *
+ * It is deliberately separate from WompiPaymentLink: the previous code typed
+ * the raw response AS the domain object, so every camelCase read silently
+ * produced undefined. Note there is no `url` field at all - the checkout URL
+ * is derived from the id.
+ */
+export interface WompiPaymentLinkResponse {
+	id: string;
+	name: string;
+	description?: string | null;
+	amount_in_cents: number;
+	currency: string;
+	single_use: boolean;
+	collect_shipping: boolean;
+	active: boolean;
+	expires_at?: string | null;
+	redirect_url?: string | null;
+	created_at: string;
+	updated_at?: string | null;
 }
 
 export interface WompiPaymentLink {

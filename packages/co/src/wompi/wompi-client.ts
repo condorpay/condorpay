@@ -5,10 +5,17 @@ import type {
 	CreatePayoutRequest,
 	WompiConfig,
 	WompiPaymentLink,
+	WompiPaymentLinkResponse,
 	WompiPayout,
 } from "./types.js";
+import { WompiPaymentLinkStatus } from "./types.js";
 
 const WOMPI_PRODUCTION_URL = "https://production.wompi.co/v1";
+
+// Wompi serves hosted payment links from a different host than the API, and it
+// never returns the link URL in the response, so it has to be built from the id.
+// Override it through WompiConfig.checkoutUrl when using the sandbox.
+const WOMPI_PRODUCTION_CHECKOUT_URL = "https://checkout.wompi.co";
 
 function assertCop(amount: Amount, field = "amount.currency"): void {
 	if (amount.currency !== Currency.COP) {
@@ -26,10 +33,14 @@ export class WompiClient {
 	private readonly http: HttpClient;
 	private readonly publicKey: string;
 	private readonly privateKey: string;
+	private readonly checkoutUrl: string;
 
 	constructor(config: WompiConfig) {
 		this.publicKey = config.publicKey;
 		this.privateKey = config.privateKey;
+		this.checkoutUrl = (
+			config.checkoutUrl ?? WOMPI_PRODUCTION_CHECKOUT_URL
+		).replace(/\/+$/, "");
 		this.http = new HttpClient({
 			baseUrl: config.baseUrl ?? WOMPI_PRODUCTION_URL,
 		});
@@ -49,7 +60,7 @@ export class WompiClient {
 			expires_at: request.expiresAt,
 			redirect_url: request.redirectUrl,
 		};
-		const resp = await this.http.post<WompiResponse<WompiPaymentLink>>(
+		const resp = await this.http.post<WompiResponse<WompiPaymentLinkResponse>>(
 			"/payment_links",
 			{
 				headers: { Authorization: `Bearer ${this.privateKey}` },
@@ -60,7 +71,7 @@ export class WompiClient {
 	}
 
 	async getPaymentLink(id: string): Promise<WompiPaymentLink> {
-		const resp = await this.http.get<WompiResponse<WompiPaymentLink>>(
+		const resp = await this.http.get<WompiResponse<WompiPaymentLinkResponse>>(
 			`/payment_links/${id}`,
 			{
 				headers: { Authorization: `Bearer ${this.publicKey}` },
@@ -105,16 +116,33 @@ export class WompiClient {
 		return this.mapPayout(resp.data);
 	}
 
-	private mapPaymentLink(raw: WompiPaymentLink): WompiPaymentLink {
+	/**
+	 * Maps Wompi's snake_case response onto the domain object.
+	 *
+	 * This used to take a WompiPaymentLink and read camelCase properties off
+	 * the raw payload, so `amount`, `status`, `createdAt` and `expiresAt` all
+	 * came back undefined while TypeScript reported them as present. `url` was
+	 * worse: Wompi does not return one at all, so consumers received a link
+	 * object whose url was undefined and, once serialised to JSON, absent.
+	 *
+	 * The checkout URL is derived from the id, which is how Wompi's hosted
+	 * payment links are addressed.
+	 */
+	private mapPaymentLink(raw: WompiPaymentLinkResponse): WompiPaymentLink {
 		return {
 			id: raw.id,
 			name: raw.name,
-			url: raw.url,
-			amount: raw.amount,
+			url: `${this.checkoutUrl}/l/${raw.id}`,
+			amount: {
+				value: String(raw.amount_in_cents / 100),
+				currency: Currency.COP,
+			},
 			currency: Currency.COP,
-			status: raw.status,
-			createdAt: raw.createdAt,
-			expiresAt: raw.expiresAt,
+			status: raw.active
+				? WompiPaymentLinkStatus.ACTIVE
+				: WompiPaymentLinkStatus.INACTIVE,
+			createdAt: raw.created_at,
+			expiresAt: raw.expires_at ?? undefined,
 		};
 	}
 
