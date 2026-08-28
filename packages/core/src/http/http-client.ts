@@ -85,7 +85,7 @@ export class HttpClient {
 		if (!response.ok) {
 			const body = await response.text().catch(() => "");
 			throw new NetworkError(
-				`HTTP ${response.status}: ${response.statusText}`,
+				describeHttpError(response.status, response.statusText, body),
 				{
 					code: ErrorCode.NETWORK_ERROR,
 					statusCode: response.status,
@@ -109,4 +109,49 @@ export class HttpClient {
 			});
 		}
 	}
+}
+
+/**
+ * Builds an error message that carries the provider's own explanation.
+ *
+ * The body was already captured in `responseBody`, but a message of just
+ * "HTTP 422: Unprocessable Entity" forces whoever is integrating to reproduce
+ * the call by hand to find out which field the provider rejected. Wompi, for
+ * example, answers with a `reason` that says exactly what went wrong.
+ */
+function describeHttpError(
+	status: number,
+	statusText: string,
+	body: string,
+): string {
+	const base = `HTTP ${status}: ${statusText}`;
+	if (!body) {
+		return base;
+	}
+
+	let detail: string | undefined;
+	try {
+		const parsed = JSON.parse(body) as {
+			error?: { reason?: unknown; messages?: unknown; type?: unknown };
+			message?: unknown;
+		};
+		const error = parsed.error;
+
+		if (typeof error?.reason === "string") {
+			detail = error.reason;
+		} else if (error?.messages && typeof error.messages === "object") {
+			detail = Object.entries(error.messages as Record<string, unknown>)
+				.map(([field, value]) => `${field}: ${String(value)}`)
+				.join("; ");
+		} else if (typeof error?.type === "string") {
+			detail = error.type;
+		} else if (typeof parsed.message === "string") {
+			detail = parsed.message;
+		}
+	} catch {
+		// Not JSON. A short raw body is still more useful than nothing.
+		detail = body.length <= 200 ? body : undefined;
+	}
+
+	return detail ? `${base} - ${detail}` : base;
 }

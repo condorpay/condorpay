@@ -15,15 +15,31 @@ function mockFetch(body: unknown, status = 200): void {
 	);
 }
 
+// Mirrors an actual /payment_links response. The previous fixture returned the
+// DOMAIN shape (url, amount, status, createdAt), so the pass-through mapper
+// passed its tests while producing undefined for every one of those fields
+// against the real API. Note there is no `url`: Wompi does not send one.
 const LINK_RESPONSE = {
 	data: {
 		id: "link-001",
 		name: "Test Link",
-		url: "https://checkout.wompi.co/l/abc123",
-		amount: { value: "50000", currency: Currency.COP },
-		currency: Currency.COP,
-		status: WompiPaymentLinkStatus.ACTIVE,
-		createdAt: "2026-04-02T00:00:00Z",
+		description: "Test",
+		amount_in_cents: 5000000,
+		currency: "COP",
+		single_use: true,
+		collect_shipping: false,
+		collect_customer_legal_id: false,
+		active: true,
+		expires_at: null,
+		redirect_url: null,
+		image_url: null,
+		sku: null,
+		customer_data: null,
+		taxes: [],
+		default_language: "es",
+		created_at: "2026-04-02T00:00:00Z",
+		updated_at: "2026-04-02T00:00:00Z",
+		merchant_public_key: "pub_test_x",
 	},
 };
 
@@ -73,8 +89,41 @@ describe("WompiClient", () => {
 				amount: { value: "50000", currency: Currency.COP },
 			});
 			expect(result.id).toBe("link-001");
-			expect(result.url).toBe("https://checkout.wompi.co/l/abc123");
+			// Derived from the id, because the API returns no URL.
+			expect(result.url).toBe("https://checkout.wompi.co/l/link-001");
 			expect(result.status).toBe(WompiPaymentLinkStatus.ACTIVE);
+			// amount_in_cents -> major units, the unit the domain type uses.
+			expect(result.amount).toEqual({
+				value: "50000",
+				currency: Currency.COP,
+			});
+			expect(result.createdAt).toBe("2026-04-02T00:00:00Z");
+		});
+
+		it("builds the checkout URL against a configured host", async () => {
+			mockFetch(LINK_RESPONSE);
+			const sandbox = new WompiClient({
+				publicKey: "pub",
+				privateKey: "priv",
+				baseUrl: "https://sandbox.wompi.co/v1",
+				checkoutUrl: "https://checkout.sandbox.wompi.co",
+			});
+			const result = await sandbox.createPaymentLink({
+				name: "Test Link",
+				amount: { value: "50000", currency: Currency.COP },
+			});
+			expect(result.url).toBe("https://checkout.sandbox.wompi.co/l/link-001");
+		});
+
+		it("maps an inactive link to INACTIVE", async () => {
+			mockFetch({
+				data: { ...LINK_RESPONSE.data, active: false },
+			});
+			const result = await client.createPaymentLink({
+				name: "Test Link",
+				amount: { value: "50000", currency: Currency.COP },
+			});
+			expect(result.status).toBe(WompiPaymentLinkStatus.INACTIVE);
 		});
 
 		it("throws ValidationError for non-COP currency", async () => {
