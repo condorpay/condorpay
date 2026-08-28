@@ -1,4 +1,5 @@
 import { ValidationError } from "@condorpay/core";
+import { sha256Hex } from "./sha256.js";
 import type { WompiWebhookEvent } from "./types.js";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -41,17 +42,6 @@ function constantTimeEqualHex(left: string, right: string): boolean {
 		diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
 	}
 	return diff === 0;
-}
-
-async function sha256Hex(value: string): Promise<string> {
-	const encoder = new TextEncoder();
-	const digest = await globalThis.crypto.subtle.digest(
-		"SHA-256",
-		encoder.encode(value),
-	);
-	return Array.from(new Uint8Array(digest))
-		.map((b) => b.toString(16).padStart(2, "0"))
-		.join("");
 }
 
 export async function validateWompiWebhook(

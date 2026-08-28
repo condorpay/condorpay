@@ -1,5 +1,7 @@
 import type { Amount } from "@condorpay/core";
 import { Currency, HttpClient, ValidationError } from "@condorpay/core";
+import type { CreateCheckoutUrlRequest } from "./checkout.js";
+import { buildWompiCheckoutUrl } from "./checkout.js";
 import type {
 	CreatePaymentLinkRequest,
 	CreatePayoutRequest,
@@ -7,8 +9,10 @@ import type {
 	WompiPaymentLink,
 	WompiPaymentLinkResponse,
 	WompiPayout,
+	WompiTransaction,
+	WompiTransactionResponse,
 } from "./types.js";
-import { WompiPaymentLinkStatus } from "./types.js";
+import { WompiPaymentLinkStatus, WompiTransactionStatus } from "./types.js";
 
 const WOMPI_PRODUCTION_URL = "https://production.wompi.co/v1";
 
@@ -34,6 +38,7 @@ export class WompiClient {
 	private readonly publicKey: string;
 	private readonly privateKey: string;
 	private readonly checkoutUrl: string;
+	private readonly integritySecret: string;
 
 	constructor(config: WompiConfig) {
 		this.publicKey = config.publicKey;
@@ -41,6 +46,7 @@ export class WompiClient {
 		this.checkoutUrl = (
 			config.checkoutUrl ?? WOMPI_PRODUCTION_CHECKOUT_URL
 		).replace(/\/+$/, "");
+		this.integritySecret = config.integritySecret ?? "";
 		this.http = new HttpClient({
 			baseUrl: config.baseUrl ?? WOMPI_PRODUCTION_URL,
 		});
@@ -68,6 +74,64 @@ export class WompiClient {
 			},
 		);
 		return this.mapPaymentLink(resp.data);
+	}
+
+	/**
+	 * Signed Web Checkout URL for a payment the caller identifies by
+	 * `request.reference`. Nothing is sent to Wompi: the URL is built and signed
+	 * locally, so checkout cannot fail on a network round trip.
+	 */
+	async buildCheckoutUrl(request: CreateCheckoutUrlRequest): Promise<string> {
+		assertCop(request.amount);
+		return buildWompiCheckoutUrl({
+			checkoutUrl: this.checkoutUrl,
+			publicKey: this.publicKey,
+			integritySecret: this.integritySecret,
+			request,
+		});
+	}
+
+	/**
+	 * Resolves the outcome of a checkout by the reference that started it.
+	 *
+	 * Wompi keeps every attempt made against a reference, so a shopper who
+	 * retries after a decline leaves several rows. An approved one settles the
+	 * question whenever it exists; otherwise the newest attempt is the outcome.
+	 */
+	async getTransactionByReference(
+		reference: string,
+	): Promise<WompiTransaction | null> {
+		const resp = await this.http.get<WompiResponse<WompiTransactionResponse[]>>(
+			`/transactions?reference=${encodeURIComponent(reference)}`,
+			{
+				headers: { Authorization: `Bearer ${this.privateKey}` },
+			},
+		);
+		const rows = Array.isArray(resp.data) ? resp.data : [];
+		if (rows.length === 0) {
+			return null;
+		}
+		const approved = rows.find(
+			(row) => row.status === WompiTransactionStatus.APPROVED,
+		);
+		const chosen =
+			approved ??
+			[...rows].sort((a, b) =>
+				String(a.created_at).localeCompare(String(b.created_at)),
+			)[rows.length - 1];
+		return this.mapTransaction(chosen);
+	}
+
+	private mapTransaction(raw: WompiTransactionResponse): WompiTransaction {
+		return {
+			id: raw.id,
+			status: raw.status as WompiTransactionStatus,
+			amountInCents: raw.amount_in_cents,
+			currency: Currency.COP,
+			paymentMethodType: raw.payment_method_type ?? "",
+			reference: raw.reference,
+			createdAt: raw.created_at,
+		};
 	}
 
 	async getPaymentLink(id: string): Promise<WompiPaymentLink> {
